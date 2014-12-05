@@ -57,7 +57,10 @@ class AEAD(object):
         h.update(iv)
         h.update(cipher_text)
         h.update(additional_data_length)
-        h.verify(mac)
+        try:
+            h.verify(mac)
+        except InvalidSignature:
+            raise ValueError("data provided has an invalid signature.")
 
         cipher = Cipher(
             algorithms.AES(self.encryption_key), modes.CBC(iv), self.backend
