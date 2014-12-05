@@ -23,10 +23,13 @@ class AEAD(object):
         return base64.urlsafe_b64encode(os.urandom(32))
 
     def encrypt(self, data, additional_data):
+        iv = os.urandom(16)
+        return self._encrypt_from_parts(data, additional_data, iv)
+
+    def _encrypt_from_parts(self, data, additional_data, iv):
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
         padded_data = padder.update(data) + padder.finalize()
 
-        iv = os.urandom(16)
         cipher = Cipher(
             algorithms.AES(self.encryption_key), modes.CBC(iv), self.backend
         )
