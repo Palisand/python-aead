@@ -15,8 +15,8 @@ class AEAD(object):
         if len(key) != 32:
             raise ValueError("key must be 32 bytes long.")
 
-        self.encryption_key = key[:16]
-        self.mac_key = key[16:]
+        self.encryption_key = key[16:]
+        self.mac_key = key[:16]
         self.backend = backend
 
     @classmethod
@@ -25,7 +25,9 @@ class AEAD(object):
 
     def encrypt(self, data, additional_data):
         iv = os.urandom(16)
-        return self._encrypt_from_parts(data, additional_data, iv)
+        return base64.urlsafe_b64encode(
+            self._encrypt_from_parts(data, additional_data, iv)
+        )
 
     def _encrypt_from_parts(self, data, additional_data, iv):
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
@@ -38,7 +40,7 @@ class AEAD(object):
         encryptor = cipher.encryptor()
         cipher_text = iv + encryptor.update(padded_data) + encryptor.finalize()
 
-        additional_data_length = struct.pack(">Q", len(additional_data))
+        additional_data_length = struct.pack(">Q", len(additional_data) * 8)
 
         h = hmac.HMAC(self.mac_key, hashes.SHA256(), self.backend)
         h.update(additional_data)
@@ -46,15 +48,15 @@ class AEAD(object):
         h.update(additional_data_length)
         mac = h.finalize()
 
-        return base64.urlsafe_b64encode(cipher_text + mac)
+        return cipher_text + mac[:16]
 
     def decrypt(self, data, additional_data):
         decoded_data = base64.urlsafe_b64decode(data)
-        mac = decoded_data[-32:]
+        mac = decoded_data[-16:]
         iv = decoded_data[0:16]
-        cipher_text = decoded_data[16:-32]
+        cipher_text = decoded_data[16:-16]
 
-        additional_data_length = struct.pack(">Q", len(additional_data))
+        additional_data_length = struct.pack(">Q", len(additional_data) * 8)
 
         h = hmac.HMAC(self.mac_key, hashes.SHA256(), self.backend)
         h.update(additional_data)
