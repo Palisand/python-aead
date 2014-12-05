@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 class AEAD(object):
 
     def __init__(self, key, backend=default_backend()):
+        key = base64.urlsafe_b64decode(key)
         if len(key) != 32:
             raise ValueError("key must be 32 bytes long.")
 
@@ -18,8 +19,8 @@ class AEAD(object):
         self.backend = backend
 
     @classmethod
-    def generate_key():
-        pass
+    def generate_key(cls):
+        return base64.urlsafe_b64encode(os.urandom(32))
 
     def encrypt(self, data, additional_data):
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
