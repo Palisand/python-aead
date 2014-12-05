@@ -10,7 +10,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 class AEAD(object):
 
     def __init__(self, key, backend=default_backend()):
-        assert len(key) == 32
+        if len(key) != 32:
+            raise ValueError("key must be 32 bytes long.")
+
         self.encryption_key = key[:16]
         self.mac_key = key[16:]
         self.backend = backend
@@ -54,7 +56,7 @@ class AEAD(object):
         h.update(iv)
         h.update(cipher_text)
         h.update(additional_data_length)
-        assert h.finalize() == mac
+        h.verify(mac)
 
         cipher = Cipher(
             algorithms.AES(self.encryption_key), modes.CBC(iv), self.backend
