@@ -4,7 +4,7 @@ import struct
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, hmac, padding
+from cryptography.hazmat.primitives import constant_time, hashes, hmac, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 
@@ -63,9 +63,7 @@ class AEAD(object):
         h.update(iv)
         h.update(cipher_text)
         h.update(additional_data_length)
-        try:
-            h.verify(mac)
-        except InvalidSignature:
+        if not constant_time.bytes_eq(mac, h.finalize()[:16]):
             raise ValueError("data provided has an invalid signature.")
 
         cipher = Cipher(
