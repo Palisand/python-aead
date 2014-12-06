@@ -20,13 +20,13 @@ def test_vector():
 
     iv = binascii.unhexlify(b"1af38c2dc2b96ffdd86694092341bc04")
 
-    additional_data = binascii.unhexlify(
+    associated_data = binascii.unhexlify(
         b"546865207365636f6e64207072696e6369706c65206f66204175677573746520"
         b"4b6572636b686f666673"
     )
 
     cryptor = AEAD(key)
-    foo = cryptor._encrypt_from_parts(data, additional_data, iv)
+    foo = cryptor._encrypt_from_parts(data, associated_data, iv)
 
     assert binascii.hexlify(foo) == (
         b"1af38c2dc2b96ffdd86694092341bc04c80edfa32ddf39d5ef00c0b468834279"

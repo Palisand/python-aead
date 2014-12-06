@@ -22,13 +22,13 @@ class AEAD(object):
     def generate_key(cls):
         return base64.urlsafe_b64encode(os.urandom(32))
 
-    def encrypt(self, data, additional_data):
+    def encrypt(self, data, associated_data):
         iv = os.urandom(16)
         return base64.urlsafe_b64encode(
-            self._encrypt_from_parts(data, additional_data, iv)
+            self._encrypt_from_parts(data, associated_data, iv)
         )
 
-    def _encrypt_from_parts(self, data, additional_data, iv):
+    def _encrypt_from_parts(self, data, associated_data, iv):
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
         padded_data = padder.update(data) + padder.finalize()
 
@@ -39,29 +39,29 @@ class AEAD(object):
         encryptor = cipher.encryptor()
         cipher_text = iv + encryptor.update(padded_data) + encryptor.finalize()
 
-        additional_data_length = struct.pack(">Q", len(additional_data) * 8)
+        associated_data_length = struct.pack(">Q", len(associated_data) * 8)
 
         h = hmac.HMAC(self.mac_key, hashes.SHA256(), self.backend)
-        h.update(additional_data)
+        h.update(associated_data)
         h.update(cipher_text)
-        h.update(additional_data_length)
+        h.update(associated_data_length)
         mac = h.finalize()
 
         return cipher_text + mac[:16]
 
-    def decrypt(self, data, additional_data):
+    def decrypt(self, data, associated_data):
         decoded_data = base64.urlsafe_b64decode(data)
         mac = decoded_data[-16:]
         iv = decoded_data[0:16]
         cipher_text = decoded_data[16:-16]
 
-        additional_data_length = struct.pack(">Q", len(additional_data) * 8)
+        associated_data_length = struct.pack(">Q", len(associated_data) * 8)
 
         h = hmac.HMAC(self.mac_key, hashes.SHA256(), self.backend)
-        h.update(additional_data)
+        h.update(associated_data)
         h.update(iv)
         h.update(cipher_text)
-        h.update(additional_data_length)
+        h.update(associated_data_length)
         if not constant_time.bytes_eq(mac, h.finalize()[:16]):
             raise ValueError("data provided has an invalid signature.")
 
