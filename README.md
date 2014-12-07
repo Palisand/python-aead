@@ -40,7 +40,7 @@ encrypt and the second being associated data that you want to authenticate but
 not encrypt.
 
 ```python
-cryptor.encrypt(b"Hello, World!", b"Additional Data")
+ct = cryptor.encrypt(b"Hello, World!", b"Additional Data")
 ```
 
 `.encrypt()` returns a base64url encoded cipher text.
@@ -50,7 +50,7 @@ takes two parameters, the first being the cipher text that needs decrypting and
 the second being the associated data that was authenticated.
 
 ```python
-cryptor.decrypt(b"Hello, World!", b"Additional Data")
+cryptor.decrypt(ct, b"Additional Data")
 ```
 
 If the cipher text is corrupted or the associated data provided during the 
