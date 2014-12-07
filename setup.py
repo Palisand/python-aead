@@ -8,12 +8,14 @@ from setuptools import find_packages, setup
 
 setup(
     name="aead",
-    description="An authenticated encrypted implementation.",
+    description="An authenticated encryption implementation.",
     version="0.1.dev1",
     install_requires=[
         "cryptography"
     ],
     packages=find_packages(exclude=["tests*"]),
+    license="BSD or Apache License, Version 2.0",
+    url="https://github.com/Ayrx/python-aead",
     author="Terry Chia",
     author_email="terrycwk1994@gmail.com",
     classifiers=[
