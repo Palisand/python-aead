@@ -28,7 +28,7 @@ class AEAD(object):
     def generate_key(cls):
         return base64.urlsafe_b64encode(os.urandom(32))
 
-    def encrypt(self, data, associated_data):
+    def encrypt(self, data, associated_data=b""):
         iv = os.urandom(16)
         return base64.urlsafe_b64encode(
             self._encrypt_from_parts(data, associated_data, iv)
@@ -55,7 +55,7 @@ class AEAD(object):
 
         return cipher_text + mac[:16]
 
-    def decrypt(self, data, associated_data):
+    def decrypt(self, data, associated_data=b""):
         decoded_data = base64.urlsafe_b64decode(data)
         mac = decoded_data[-16:]
         iv = decoded_data[0:16]
