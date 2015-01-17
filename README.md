@@ -15,6 +15,8 @@ AES_128_CBC_HMAC_SHA_256. If more flexibility is required, I highly recommend
 using the [PyCA cryptography library](https://github.com/pyca/cryptography)
 that provides the cryptographic primitives python-aead uses.
 
+python-aead supports and is tested against Python versions 2.6 - 3.4 as well as PyPy. 
+
 # How to use
 
 python-aead aims to provide a very simple interface. The module contains a 
