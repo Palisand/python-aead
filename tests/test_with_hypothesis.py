@@ -1,9 +1,12 @@
-from hypothesis import given
+import pytest
 
 from aead import AEAD
 
 
-@given(bytes, bytes)
+hypothesis = pytest.importorskip("hypothesis")
+
+
+@hypothesis.given(bytes, bytes)
 def test_round_trip_encrypt_decrypt(plaintext, associated_data):
     cryptor = AEAD(AEAD.generate_key())
     ct = cryptor.encrypt(plaintext, associated_data)
