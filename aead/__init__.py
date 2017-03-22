@@ -36,14 +36,14 @@ class AEAD(object):
 
     def _encrypt_from_parts(self, data, associated_data, iv):
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
-        padded_data = padder.update(data) + padder.finalize()
+        padded_data = padder.update(data) + padder.finalize()  # + 16
 
         cipher = Cipher(
             algorithms.AES(self.encryption_key), modes.CBC(iv), self.backend
         )
 
         encryptor = cipher.encryptor()
-        cipher_text = iv + encryptor.update(padded_data) + encryptor.finalize()
+        cipher_text = iv + encryptor.update(padded_data) + encryptor.finalize()  # + 16
 
         associated_data_length = struct.pack(">Q", len(associated_data) * 8)
 
@@ -53,7 +53,7 @@ class AEAD(object):
         h.update(associated_data_length)
         mac = h.finalize()
 
-        return cipher_text + mac[:16]
+        return cipher_text + mac[:16]  # + 16
 
     def decrypt(self, data, associated_data=b""):
         decoded_data = base64.urlsafe_b64decode(data)
@@ -82,3 +82,32 @@ class AEAD(object):
         unpadded_data = unpadder.update(plain_text) + unpadder.finalize()
 
         return unpadded_data
+
+
+class FileCrypter(AEAD):  # TODO: test with 500 MB
+
+    CHUNK_SIZE = 1000000  # 10 mb
+    LEN_ENCRYPT_DIFF = 48  # PKCS7 padding + iv + hmac
+
+    def __init__(self, key, backend=default_backend(), chunksize=CHUNK_SIZE):
+        super().__init__(key, backend)
+        self.__chunksize_encrypt = chunksize
+
+    def encrypt_file(self, src, dest):
+        self.__crypt(src, dest, self.encrypt)
+
+    def decrypt_file(self, src, dest):
+        self.__crypt(src, dest, self.decrypt)
+
+    def __crypt(self, src, dest, method):
+        assert src != dest, "The source path must not be identical to the destination path."
+
+        chunksize = self.__chunksize_encrypt if method == self.encrypt else self.__chunksize_decrypt
+        with open(src, 'rb') as src_, open(dest, 'wb') as dest_:
+            for chunk in iter(lambda: src_.read(chunksize), b''):
+                dest_.write(method(chunk))
+
+    @property
+    def __chunksize_decrypt(self):
+        n = 4 * (self.__chunksize_encrypt + self.LEN_ENCRYPT_DIFF) / 3
+        return int(n if n % 4 == 0 else n + 4 - n % 4)
